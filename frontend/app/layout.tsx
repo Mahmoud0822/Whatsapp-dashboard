@@ -1,40 +1,41 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-import { ThemeProvider } from '@/components/theme-provider'
-import { Toaster } from '@/components/ui/toaster'
-import { AuthProvider } from '@/components/auth-provider'
-import { QueryProvider } from '@/components/query-provider'
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
 
-const inter = Inter({ subsets: ['latin'] })
+import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider } from "@/components/auth-provider";
+import { QueryProvider } from "@/components/query-provider";
+import { Toaster } from "@/components/ui/toaster";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'WhatsApp Business Dashboard',
-  description: 'Controle e gerencie seu WhatsApp Business de forma eficiente',
-}
+  title: "WhatsApp Business Dashboard",
+  description: "Gerencie suas conversas e automatize seu atendimento no WhatsApp Business",
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={inter.className}>
-        <QueryProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
           <AuthProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
+            <QueryProvider>
               {children}
               <Toaster />
-            </ThemeProvider>
+            </QueryProvider>
           </AuthProvider>
-        </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }
