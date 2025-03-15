@@ -46,7 +46,7 @@
     --popover-foreground: 210 40% 98%;
  
     --primary: 142.1 70.6% 45.3%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-foreground: 144.9 80.4% 10%;
  
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -62,7 +62,7 @@
  
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 142.1 76.2% 36.3%;
+    --ring: 142.1 76.2% 45.3%;
   }
 }
  
@@ -72,39 +72,6 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
-}
-
-/* Estilos personalizados para o chat */
-.chat-bubble {
-  @apply p-3 rounded-lg max-w-[80%] break-words;
-}
-
-.chat-bubble-sent {
-  @apply bg-whatsapp-light text-gray-800 rounded-tr-none ml-auto;
-}
-
-.chat-bubble-received {
-  @apply bg-white text-gray-800 rounded-tl-none;
-}
-
-.chat-timestamp {
-  @apply text-xs text-gray-500 mt-1;
-}
-
-/* Scrollbar personalizado */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full;
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  @apply bg-gray-700;
 }
