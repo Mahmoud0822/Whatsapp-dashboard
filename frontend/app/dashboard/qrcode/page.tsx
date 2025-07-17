@@ -14,43 +14,37 @@ export default function QrCodePage() {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [whatsappStatus, setWhatsappStatus] = useState<WhatsAppStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+// Status query
+const { data: statusData, refetch: refetchStatus, isSuccess } = useQuery({
+  queryKey: ["whatsapp-status"],
+  queryFn: async () => {
+    const response = await whatsappApi.getStatus();
+    return response.data;
+  }
+});
 
-  // Busca o status do WhatsApp e o QR code
-  const { data: statusData, refetch: refetchStatus } = useQuery({
-    queryKey: ["whatsapp-status"],
-    queryFn: async () => {
-      try {
-        const response = await whatsappApi.getStatus();
-        return response.data;
-      } catch (error) {
-        console.error("Erro ao buscar status do WhatsApp:", error);
-        return null;
-      }
-    },
-    onSuccess: (data) => {
-      setWhatsappStatus(data);
-      setIsLoading(false);
-    },
-  });
+useEffect(() => {
+  if (isSuccess && statusData) {
+    setWhatsappStatus(statusData);
+    setIsLoading(false);
+  }
+}, [isSuccess, statusData]);
 
-  const { data: qrCodeData, refetch: refetchQrCode } = useQuery({
-    queryKey: ["whatsapp-qrcode"],
-    queryFn: async () => {
-      try {
-        const response = await whatsappApi.getQrCode();
-        return response.data;
-      } catch (error) {
-        console.error("Erro ao buscar QR code:", error);
-        return null;
-      }
-    },
-    onSuccess: (data) => {
-      if (data?.qrCode) {
-        setQrCode(data.qrCode);
-      }
-    },
-    enabled: !whatsappStatus?.connected,
-  });
+// QR code query
+const { data: qrCodeData, refetch: refetchQrCode, isSuccess: isQrSuccess } = useQuery({
+  queryKey: ["whatsapp-qrcode"],
+  queryFn: async () => {
+    const response = await whatsappApi.getQrCode();
+    return response.data;
+  },
+  enabled: !whatsappStatus?.connected,
+});
+
+useEffect(() => {
+  if (isQrSuccess && qrCodeData?.qrCode) {
+    setQrCode(qrCodeData.qrCode);
+  }
+}, [isQrSuccess, qrCodeData]);
 
   // Inscreve-se para atualizações de status em tempo real
   useEffect(() => {

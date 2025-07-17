@@ -4,9 +4,9 @@ const nextConfig = {
   images: {
     domains: ['localhost', 'api.whatsapp.com', 'web.whatsapp.com'],
   },
-  experimental: {
-    serverActions: true,
-  },
+//  experimental: {
+//    serverActions: true,
+//  },
 };
 
 module.exports = nextConfig;

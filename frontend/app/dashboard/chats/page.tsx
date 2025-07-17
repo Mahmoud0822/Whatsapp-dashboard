@@ -27,22 +27,18 @@ export default function ChatsPage() {
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
-  const {
-    data: chatsData,
-    isLoading: isLoadingChats,
-    refetch: refetchChats,
-  } = useQuery({
-    queryKey: ["whatsapp-chats"],
-    queryFn: async () => {
-      try {
-        const response = await whatsappApi.getChats();
-        return response.data;
-      } catch (error) {
-        console.error("Erro ao buscar conversas:", error);
-        return [];
-      }
-    },
-  });
+const {
+  data: chatsData,
+  isLoading: isLoadingChats,
+  refetch: refetchChats,
+} = useQuery({
+  queryKey: ["whatsapp-chats"],
+  queryFn: async () => {
+    const response = await whatsappApi.getChats();
+    return response.data;
+  },
+});
+
 
   const {
     data: messagesData,
