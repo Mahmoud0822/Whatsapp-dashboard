@@ -2,43 +2,45 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-// Rotas públicas que não precisam de autenticação
-const publicRoutes = ["/", "/login", "/register", "/forgot-password", "/reset-password"];
-
-// Rotas de API que não precisam de autenticação
-const publicApiRoutes = ["/api/auth"];
+const PUBLIC_ROUTES = ["/", "/login", "/register", "/forgot-password", "/reset-password"];
+const PUBLIC_API_ROUTES = ["/api/auth"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
-  // Verifica se é uma rota pública
-  if (publicRoutes.some(route => pathname === route) || 
-      publicApiRoutes.some(route => pathname.startsWith(route))) {
-    return NextResponse.next();
-  }
-  
-  // Verifica se é uma rota de recursos estáticos
+
+
   if (
-    pathname.startsWith("/_next") || 
+    pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon.ico") ||
-    pathname.includes(".") // Arquivos com extensão (imagens, css, js, etc)
+    pathname.includes(".")
   ) {
     return NextResponse.next();
   }
 
-  // Verifica se o usuário está autenticado
-  const token = await getToken({ req: request });
-  
-  // Se não estiver autenticado, redireciona para a página de login
+
+  if (
+    PUBLIC_ROUTES.includes(pathname) ||
+    PUBLIC_API_ROUTES.some(route => pathname.startsWith(route))
+  ) {
+    return NextResponse.next();
+  }
+
+
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+
   if (!token) {
-    const url = new URL("/login", request.url);
-    url.searchParams.set("callbackUrl", encodeURI(request.url));
-    return NextResponse.redirect(url);
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", encodeURIComponent(request.url));
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth).*)"],
 };

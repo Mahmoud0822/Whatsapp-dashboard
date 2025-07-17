@@ -41,12 +41,13 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const result = await signIn("credentials", {
-        redirect: false,
-        email: data.email,
-        password: data.password,
-      });
+          const result = await signIn("credentials", {
+            redirect: false,
+            email: data.email,
+            password: data.password,
+          });
 
+          console.log("Login result:", result);
       if (result?.error) {
         toast({
           title: "Erro ao fazer login",

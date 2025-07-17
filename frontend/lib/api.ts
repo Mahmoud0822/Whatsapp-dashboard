@@ -1,98 +1,78 @@
+// lib/api.ts
 import axios from 'axios';
 import { getSession } from 'next-auth/react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-const api = axios.create({
+// instance بدون توكن — لمهام زي login, register
+const authAxios = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Interceptor para adicionar token de autenticação
-api.interceptors.request.use(async (config) => {
-  if (typeof window !== 'undefined') {
-    const session = await getSession();
-    if (session?.user?.accessToken) {
-      config.headers.Authorization = `Bearer ${session.user.accessToken}`;
-    }
+// instance بيضيف التوكن من session — للمهام المحمية
+const secureAxios = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add token to secure requests
+secureAxios.interceptors.request.use(async (config) => {
+  const session = await getSession();
+  if (session?.user?.accessToken) {
+    config.headers.Authorization = `Bearer ${session.user.accessToken}`;
   }
   return config;
 });
 
-// Interceptor para tratamento de erros
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    
-    // Se o erro for 401 (Unauthorized) e não for uma tentativa de refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      
-      try {
-        // Aqui poderia implementar lógica de refresh token se necessário
-        // Por enquanto, apenas redireciona para login
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
-        return Promise.reject(error);
-      } catch (refreshError) {
-        return Promise.reject(refreshError);
-      }
+// Handle 401 errors
+secureAxios.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    if (typeof window !== "undefined" && error.response?.status === 401) {
+      window.location.href = "/login";
     }
-    
     return Promise.reject(error);
   }
 );
 
-export default api;
-
-// Funções de API para autenticação
+// Public auth APIs
 export const authApi = {
-  login: (email: string, password: string) => 
-    api.post('/auth/login', { email, password }),
-  
-  register: (name: string, email: string, password: string) => 
-    api.post('/auth/register', { name, email, password }),
-  
-  forgotPassword: (email: string) => 
-    api.post('/auth/forgot-password', { email }),
-  
-  resetPassword: (token: string, password: string) => 
-    api.post('/auth/reset-password', { token, password }),
+  login: (email: string, password: string) =>
+    authAxios.post("/auth/login", { email, password }),
+
+  register: (name: string, email: string, password: string) =>
+    authAxios.post("/auth/register", { name, email, password }),
+
+  forgotPassword: (email: string) =>
+    authAxios.post("/auth/forgot-password", { email }),
+
+  resetPassword: (token: string, password: string) =>
+    authAxios.post("/auth/reset-password", { token, password }),
 };
 
-// Funções de API para WhatsApp
+// Secure APIs
 export const whatsappApi = {
-  getStatus: () => 
-    api.get('/whatsapp/status'),
-  
-  getQrCode: () => 
-    api.get('/whatsapp/qrcode'),
-  
-  disconnect: () => 
-    api.post('/whatsapp/disconnect'),
-  
-  sendMessage: (to: string, message: string) => 
-    api.post('/whatsapp/send', { to, message }),
-  
-  getChats: () => 
-    api.get('/whatsapp/chats'),
-  
-  getMessages: (chatId: string) => 
-    api.get(`/whatsapp/chats/${chatId}/messages`),
+  getStatus: () => secureAxios.get("/whatsapp/status"),
+  getQrCode: () => secureAxios.get("/whatsapp/qrcode"),
+  disconnect: () => secureAxios.post("/whatsapp/disconnect"),
+  sendMessage: (to: string, message: string) =>
+    secureAxios.post("/whatsapp/send", { to, message }),
+  getChats: () => secureAxios.get("/whatsapp/chats"),
+  getMessages: (chatId: string) =>
+    secureAxios.get(`/whatsapp/chats/${chatId}/messages`),
 };
 
-// Funções de API para usuários
 export const userApi = {
-  getProfile: () => 
-    api.get('/users/profile'),
-  
-  updateProfile: (data: any) => 
-    api.put('/users/profile', data),
-  
-  changePassword: (currentPassword: string, newPassword: string) => 
-    api.put('/users/change-password', { currentPassword, newPassword }),
+  getProfile: () => secureAxios.get("/users/profile"),
+  updateProfile: (data: any) => secureAxios.put("/users/profile", data),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    secureAxios.put("/users/change-password", {
+      currentPassword,
+      newPassword,
+    }),
 };

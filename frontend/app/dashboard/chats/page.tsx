@@ -27,8 +27,11 @@ export default function ChatsPage() {
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
-  // Busca as conversas
-  const { data: chatsData, isLoading: isLoadingChats, refetch: refetchChats } = useQuery({
+  const {
+    data: chatsData,
+    isLoading: isLoadingChats,
+    refetch: refetchChats,
+  } = useQuery({
     queryKey: ["whatsapp-chats"],
     queryFn: async () => {
       try {
@@ -39,20 +42,16 @@ export default function ChatsPage() {
         return [];
       }
     },
-    onSuccess: (data) => {
-      if (data) {
-        setChats(data);
-        setIsLoading(false);
-      }
-    },
   });
 
-  // Busca as mensagens da conversa selecionada
-  const { data: messagesData, isLoading: isLoadingMessages, refetch: refetchMessages } = useQuery({
+  const {
+    data: messagesData,
+    isLoading: isLoadingMessages,
+    refetch: refetchMessages,
+  } = useQuery({
     queryKey: ["whatsapp-messages", selectedChat],
     queryFn: async () => {
       if (!selectedChat) return [];
-      
       try {
         const response = await whatsappApi.getMessages(selectedChat);
         return response.data;
@@ -61,44 +60,32 @@ export default function ChatsPage() {
         return [];
       }
     },
-    onSuccess: (data) => {
-      if (data) {
-        setMessages(data);
-      }
-    },
     enabled: !!selectedChat,
   });
 
-  // Inscreve-se para novas mensagens em tempo real
-  useEffect(() => {
-    const unsubscribe = subscribeToNewMessages((message) => {
-      // Atualiza a lista de mensagens se a conversa estiver selecionada
-      if (selectedChat === message.from || selectedChat === message.to) {
-        setMessages((prev) => [...prev, message]);
-      }
-      
-      // Atualiza a lista de conversas
-      refetchChats();
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [selectedChat, refetchChats]);
-
-  // Atualiza as conversas quando os dados são carregados
   useEffect(() => {
     if (chatsData) {
       setChats(chatsData);
+      setIsLoading(false);
     }
   }, [chatsData]);
 
-  // Atualiza as mensagens quando os dados são carregados
   useEffect(() => {
     if (messagesData) {
       setMessages(messagesData);
     }
   }, [messagesData]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToNewMessages((message) => {
+      if (selectedChat === message.from || selectedChat === message.to) {
+        setMessages((prev) => [...prev, message]);
+      }
+      refetchChats();
+    });
+
+    return () => unsubscribe();
+  }, [selectedChat, refetchChats]);
 
   const handleSelectChat = (chatId: string) => {
     setSelectedChat(chatId);
@@ -111,7 +98,7 @@ export default function ChatsPage() {
       await whatsappApi.sendMessage(selectedChat, newMessage);
       setNewMessage("");
       refetchMessages();
-    } catch (error) {
+    } catch {
       toast({
         title: "Erro ao enviar mensagem",
         description: "Não foi possível enviar a mensagem.",
@@ -130,7 +117,6 @@ export default function ChatsPage() {
       </div>
 
       <div className="flex flex-1 overflow-hidden rounded-lg border bg-card shadow-sm">
-        {/* Lista de conversas */}
         <div className="w-full border-r md:w-1/3">
           <div className="flex h-14 items-center border-b px-4">
             <input
@@ -146,18 +132,14 @@ export default function ChatsPage() {
               </div>
             ) : chats.length === 0 ? (
               <div className="flex items-center justify-center p-8 text-center">
-                <p className="text-muted-foreground">
-                  Nenhuma conversa encontrada.
-                </p>
+                <p className="text-muted-foreground">Nenhuma conversa encontrada.</p>
               </div>
             ) : (
               <div>
                 {chats.map((chat) => (
                   <div
                     key={chat.id}
-                    className={`cursor-pointer border-b p-4 hover:bg-accent ${
-                      selectedChat === chat.id ? "bg-accent" : ""
-                    }`}
+                    className={`cursor-pointer border-b p-4 hover:bg-accent ${selectedChat === chat.id ? "bg-accent" : ""}`}
                     onClick={() => handleSelectChat(chat.id)}
                   >
                     <div className="flex items-center justify-between">
@@ -185,27 +167,20 @@ export default function ChatsPage() {
           </div>
         </div>
 
-        {/* Área de mensagens */}
         <div className="hidden w-2/3 flex-col md:flex">
           {!selectedChat ? (
             <div className="flex flex-1 items-center justify-center">
-              <p className="text-muted-foreground">
-                Selecione uma conversa para ver as mensagens.
-              </p>
+              <p className="text-muted-foreground">Selecione uma conversa para ver as mensagens.</p>
             </div>
           ) : (
             <>
-              {/* Cabeçalho da conversa */}
               <div className="flex h-14 items-center border-b px-4">
                 <h2 className="font-medium">
                   {chats.find((chat) => chat.id === selectedChat)?.name ||
-                    formatPhoneNumber(
-                      chats.find((chat) => chat.id === selectedChat)?.phone || ""
-                    )}
+                    formatPhoneNumber(chats.find((chat) => chat.id === selectedChat)?.phone || "")}
                 </h2>
               </div>
 
-              {/* Mensagens */}
               <div className="flex-1 overflow-y-auto p-4">
                 {isLoadingMessages ? (
                   <div className="flex items-center justify-center p-8">
@@ -213,20 +188,14 @@ export default function ChatsPage() {
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="flex items-center justify-center p-8 text-center">
-                    <p className="text-muted-foreground">
-                      Nenhuma mensagem encontrada.
-                    </p>
+                    <p className="text-muted-foreground">Nenhuma mensagem encontrada.</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {messages.map((message) => (
                       <div
                         key={message.id}
-                        className={`flex ${
-                          message.from === selectedChat
-                            ? "justify-start"
-                            : "justify-end"
-                        }`}
+                        className={`flex ${message.from === selectedChat ? "justify-start" : "justify-end"}`}
                       >
                         <div
                           className={`max-w-[70%] rounded-lg p-3 ${
@@ -246,7 +215,6 @@ export default function ChatsPage() {
                 )}
               </div>
 
-              {/* Área de envio de mensagem */}
               <div className="flex items-center border-t p-4">
                 <input
                   type="text"
@@ -255,16 +223,10 @@ export default function ChatsPage() {
                   placeholder="Digite uma mensagem..."
                   className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleSendMessage();
-                    }
+                    if (e.key === "Enter") handleSendMessage();
                   }}
                 />
-                <Button
-                  className="ml-2"
-                  onClick={handleSendMessage}
-                  disabled={!newMessage.trim()}
-                >
+                <Button className="ml-2" onClick={handleSendMessage} disabled={!newMessage.trim()}>
                   Enviar
                 </Button>
               </div>

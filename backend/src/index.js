@@ -6,7 +6,7 @@ const morgan = require('morgan');
 const http = require('http');
 const socketIo = require('socket.io');
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode');
+
 
 const connectDB = require('./config/db');
 const logger = require('./utils/logger');
@@ -27,10 +27,20 @@ const io = socketIo(server, {
 });
 
 // Middleware
+const allowedOrigins = ['http://localhost:3000', 'null'];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
 }));
+
+
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
@@ -49,11 +59,13 @@ const client = new Client({
 });
 
 // Eventos do WhatsApp
-client.on('qr', async (qr) => {
-  logger.info('QR Code recebido');
-  const qrImage = await qrcode.toDataURL(qr);
-  io.emit('whatsapp-qr', { qrImage });
+const qrcode = require('qrcode-terminal');
+
+client.on('qr', (qr) => {
+  console.log('\n======= QR Code: =======\n');
+  qrcode.generate(qr, { small: true });
 });
+
 
 client.on('ready', () => {
   logger.info('Cliente WhatsApp está pronto');
